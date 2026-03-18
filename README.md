@@ -2,7 +2,7 @@
 
 Deploy the full [Inkeep](https://inkeep.com) Agent Framework to [Railway](https://railway.com) with a single click.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/inkeep-agents)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new/template/QoQfOF)
 
 ---
 
