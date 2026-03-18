@@ -1,0 +1,201 @@
+{
+  "name": "Inkeep Agents",
+  "description": "The full Inkeep Agent Framework — No-Code Visual Builder + TypeScript SDK for building AI Agent Chat Assistants and Workflows. Includes agents-api, agents-manage-ui, Doltgres, Postgres, and SpiceDB.",
+  "tags": ["ai", "agents", "llm", "chatbot", "typescript", "open-source"],
+  "icon": "https://inkeep.com/favicon.ico",
+  "readme": "https://raw.githubusercontent.com/jaden-garza/inkeep-railway-template/main/README.md",
+  "services": [
+    {
+      "name": "agents-manage-ui",
+      "description": "Inkeep Visual Builder UI — drag-and-drop agent builder and management dashboard",
+      "source": {
+        "image": "inkeep/agents-manage-ui:0.56.2"
+      },
+      "deploy": {
+        "startCommand": null,
+        "healthcheckPath": "/",
+        "restartPolicyType": "ON_FAILURE"
+      },
+      "networking": {
+        "serviceDomains": [{}]
+      },
+      "variables": {
+        "ENVIRONMENT": "production",
+        "PORT": "3000",
+        "INKEEP_AGENTS_API_URL": "http://agents-api.railway.internal:3002",
+        "PUBLIC_INKEEP_AGENTS_API_URL": "${{agents-api.RAILWAY_PUBLIC_DOMAIN_HTTPS}}",
+        "PUBLIC_NANGO_CONNECT_BASE_URL": "https://connect.nango.dev",
+        "PUBLIC_NANGO_SERVER_URL": "https://api.nango.dev",
+        "NANGO_SERVER_URL": "https://api.nango.dev",
+        "NANGO_SECRET_KEY": "",
+        "PUBLIC_SIGNOZ_URL": "",
+        "SIGNOZ_URL": "",
+        "SIGNOZ_API_KEY": "",
+        "PUBLIC_IS_SMTP_CONFIGURED": "false",
+        "RESEND_API_KEY": "",
+        "SMTP_HOST": "",
+        "SMTP_FROM_ADDRESS": ""
+      }
+    },
+    {
+      "name": "agents-api",
+      "description": "Inkeep Agents API — unified manage + run API backend",
+      "source": {
+        "image": "inkeep/agents-api:0.56.2"
+      },
+      "deploy": {
+        "startCommand": null,
+        "healthcheckPath": "/health",
+        "restartPolicyType": "ON_FAILURE"
+      },
+      "networking": {
+        "serviceDomains": [{}]
+      },
+      "variables": {
+        "ENVIRONMENT": "production",
+        "PORT": "3002",
+        "INKEEP_AGENTS_MANAGE_UI_URL": "${{agents-manage-ui.RAILWAY_PUBLIC_DOMAIN_HTTPS}}",
+        "INKEEP_AGENTS_API_URL": "${{RAILWAY_PUBLIC_DOMAIN_HTTPS}}",
+        "INKEEP_AGENTS_MANAGE_DATABASE_URL": "postgresql://appuser:${{doltgres-db.DOLTGRES_PASSWORD}}@doltgres-db.railway.internal:5432/inkeep_agents",
+        "INKEEP_AGENTS_RUN_DATABASE_URL": "postgresql://appuser:${{postgres-db.POSTGRES_PASSWORD}}@postgres-db.railway.internal:5432/inkeep_agents",
+        "SPICEDB_ENDPOINT": "spicedb.railway.internal:50051",
+        "SPICEDB_PRESHARED_KEY": "${{SPICEDB_PRESHARED_KEY}}",
+        "SPICEDB_TLS_ENABLED": "false",
+        "ANTHROPIC_API_KEY": "",
+        "OPENAI_API_KEY": "",
+        "GOOGLE_GENERATIVE_AI_API_KEY": "",
+        "AZURE_API_KEY": "",
+        "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": "",
+        "OTEL_EXPORTER_OTLP_TRACES_HEADERS": "",
+        "NANGO_SERVER_URL": "https://api.nango.dev",
+        "NANGO_SECRET_KEY": "",
+        "SIGNOZ_URL": "",
+        "SIGNOZ_API_KEY": "",
+        "INKEEP_AGENTS_RUN_API_BYPASS_SECRET": "${{secret(64, \"abcdef0123456789\")}}",
+        "INKEEP_AGENTS_JWT_SIGNING_SECRET": "${{secret(43, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\")}}=",
+        "BETTER_AUTH_SECRET": "${{secret(43, \"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/\")}}=",
+        "INKEEP_AGENTS_TEMP_JWT_PRIVATE_KEY": "",
+        "INKEEP_AGENTS_TEMP_JWT_PUBLIC_KEY": "",
+        "BLOB_STORAGE_LOCAL_PATH": ".blob-storage"
+      }
+    },
+    {
+      "name": "agents-migrate",
+      "description": "One-time database migration job for Inkeep Agents",
+      "source": {
+        "image": "inkeep/agents-migrate:0.56.2"
+      },
+      "deploy": {
+        "restartPolicyType": "NEVER"
+      },
+      "variables": {
+        "ENVIRONMENT": "production",
+        "INKEEP_AGENTS_MANAGE_DATABASE_URL": "postgresql://appuser:${{doltgres-db.DOLTGRES_PASSWORD}}@doltgres-db.railway.internal:5432/inkeep_agents",
+        "INKEEP_AGENTS_RUN_DATABASE_URL": "postgresql://appuser:${{postgres-db.POSTGRES_PASSWORD}}@postgres-db.railway.internal:5432/inkeep_agents",
+        "SPICEDB_ENDPOINT": "spicedb.railway.internal:50051",
+        "SPICEDB_PRESHARED_KEY": "${{agents-api.SPICEDB_PRESHARED_KEY}}",
+        "SPICEDB_TLS_ENABLED": "false",
+        "INKEEP_AGENTS_MANAGE_UI_USERNAME": "admin@example.com",
+        "INKEEP_AGENTS_MANAGE_UI_PASSWORD": "${{secret()}}",
+        "BETTER_AUTH_SECRET": "${{agents-api.BETTER_AUTH_SECRET}}"
+      }
+    },
+    {
+      "name": "doltgres-db",
+      "description": "Doltgres — Git-versioned Postgres database for Inkeep manage API",
+      "source": {
+        "image": "dolthub/doltgresql:0.55.5"
+      },
+      "deploy": {
+        "restartPolicyType": "ON_FAILURE"
+      },
+      "variables": {
+        "DOLTGRES_USER": "appuser",
+        "DOLTGRES_PASSWORD": "${{secret()}}",
+        "DOLTGRES_DB": "inkeep_agents"
+      },
+      "volumes": [
+        {
+          "name": "doltgres-data",
+          "mountPath": "/var/lib/doltgres"
+        }
+      ]
+    },
+    {
+      "name": "postgres-db",
+      "description": "PostgreSQL 18 — run database for Inkeep agents execution state",
+      "source": {
+        "image": "postgres:18"
+      },
+      "deploy": {
+        "restartPolicyType": "ON_FAILURE"
+      },
+      "variables": {
+        "POSTGRES_DB": "inkeep_agents",
+        "POSTGRES_USER": "appuser",
+        "POSTGRES_PASSWORD": "${{secret()}}"
+      },
+      "volumes": [
+        {
+          "name": "postgres-data",
+          "mountPath": "/var/lib/postgresql/data"
+        }
+      ]
+    },
+    {
+      "name": "spicedb",
+      "description": "SpiceDB — fine-grained authorization engine for Inkeep Agents",
+      "source": {
+        "image": "authzed/spicedb:v1.49.2"
+      },
+      "deploy": {
+        "startCommand": "serve",
+        "restartPolicyType": "ON_FAILURE"
+      },
+      "variables": {
+        "SPICEDB_GRPC_PRESHARED_KEY": "${{agents-api.SPICEDB_PRESHARED_KEY}}",
+        "SPICEDB_DATASTORE_ENGINE": "postgres",
+        "SPICEDB_DATASTORE_CONN_URI": "postgres://spicedb:${{spicedb-postgres.POSTGRES_PASSWORD}}@spicedb-postgres.railway.internal:5432/spicedb?sslmode=disable",
+        "SPICEDB_HTTP_ENABLED": "true",
+        "SPICEDB_TELEMETRY_ENDPOINT": "",
+        "SPICEDB_METRICS_ENABLED": "false"
+      }
+    },
+    {
+      "name": "spicedb-migrate",
+      "description": "One-time SpiceDB schema migration job",
+      "source": {
+        "image": "authzed/spicedb:v1.49.2"
+      },
+      "deploy": {
+        "startCommand": "migrate head",
+        "restartPolicyType": "NEVER"
+      },
+      "variables": {
+        "SPICEDB_DATASTORE_ENGINE": "postgres",
+        "SPICEDB_DATASTORE_CONN_URI": "postgres://spicedb:${{spicedb-postgres.POSTGRES_PASSWORD}}@spicedb-postgres.railway.internal:5432/spicedb?sslmode=disable"
+      }
+    },
+    {
+      "name": "spicedb-postgres",
+      "description": "PostgreSQL 16 — dedicated database for SpiceDB authorization state",
+      "source": {
+        "image": "postgres:16-alpine"
+      },
+      "deploy": {
+        "restartPolicyType": "ON_FAILURE"
+      },
+      "variables": {
+        "POSTGRES_USER": "spicedb",
+        "POSTGRES_PASSWORD": "${{secret()}}",
+        "POSTGRES_DB": "spicedb"
+      },
+      "volumes": [
+        {
+          "name": "spicedb-postgres-data",
+          "mountPath": "/var/lib/postgresql/data"
+        }
+      ]
+    }
+  ]
+}
